@@ -24,12 +24,12 @@ func main() {
 	log := logger.GetLogger(ctx)
 
 	if os.Getenv("OTEL_ENABLED") == "true" {
-		shutdown, err := config.InitTracer(ctx)
+		shutdown, err := config.SetupOTelSDK(ctx, log)
 		if err != nil {
 			log.Error("failed to init tracer", "error", err)
 			os.Exit(1)
 		}
-		defer shutdown(ctx)
+		defer shutdown(context.Background())
 		log.Info("otel tracing enabled", "endpoint", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
 	}
 

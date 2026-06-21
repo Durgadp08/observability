@@ -8,6 +8,7 @@ receivers:
 
 processors:
   batch:
+  debug:
   memory_limiter:
     check_interval: 1s
     limit_percentage: 75

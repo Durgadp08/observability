@@ -15,6 +15,12 @@ Daily we encounter generally encounter production issues or sometimes would like
 these are useful to find exactly where the request is taking more time ( traces are useful only when we have good spans, a trace with no spans gives no information about the request life cycle it will have only start and end time of whole request).
 3. Logs :- Once we find a slow request in our traces, we can check the exact place why it is taking long time.
 
+Telemetry data can be two types like pull or push based 
+1. Pull based (like Prometeous) is a , Generally we write our metrics to an endpoint and then we need to tell the promteous. Hey go and scrap the data from the endpoint.
+2. Push based (OTLP exporter) where the client will send the data to that endpoint
+
+Later grafana can use the data from that endpoint and visualvisize them. 
+
 Generally we can say like this, metrics gives an high level overview of an endpoint, traces tells where the issue and logs tells why it is happening.
 
 When a request comes to an endpoint we will generally starts a trace at the begining of the handler and it will return a new context and span. 
