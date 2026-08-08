@@ -30,7 +30,7 @@ func main() {
 			os.Exit(1)
 		}
 		defer shutdown(context.Background())
-		log.Info("otel tracing enabled", "endpoint", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
+		log.InfoContext(ctx, "otel tracing enabled", "endpoint", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"))
 	}
 
 	db, err := connectDB(log)

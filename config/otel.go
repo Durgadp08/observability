@@ -11,6 +11,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/log/global"
 	"go.opentelemetry.io/otel/propagation"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -18,6 +19,9 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
+	sdklog "go.opentelemetry.io/otel/sdk/log"
 )
 
 var (
@@ -45,6 +49,13 @@ func SetupOTelSDK(ctx context.Context, log *slog.Logger) (func(context.Context) 
 		return nil, fmt.Errorf("%w", err)
 	}
 
+	logShotdown, err := setupLog(ctx, conn)
+	if err != nil {
+		log.ErrorContext(ctx, "error while setup logger", "err", err)
+		return nil, fmt.Errorf("%w", err)
+	}
+	shutdownFuncs = append(shutdownFuncs, logShotdown)
+
 	traceShutdown, err := setupTracer(ctx, conn)
 	if err != nil {
 		log.ErrorContext(ctx, "error while setup tracer", "err", err)
@@ -69,6 +80,27 @@ func SetupOTelSDK(ctx context.Context, log *slog.Logger) (func(context.Context) 
 	log.InfoContext(ctx, "otel is initialized", "endpoint", getOtelEndpoint(), "service name", getServiceName())
 
 	return shutdown, nil
+}
+
+func setupLog(ctx context.Context, conn *grpc.ClientConn) (func(context.Context) error, error) {
+	exporter, err := otlploggrpc.New(
+		ctx,
+		otlploggrpc.WithGRPCConn(conn),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	res := newResource()
+
+	provider := sdklog.NewLoggerProvider(
+		sdklog.WithProcessor(sdklog.NewBatchProcessor(exporter)),
+		sdklog.WithResource(res),
+	)
+
+	global.SetLoggerProvider(provider)
+
+	return provider.Shutdown, nil
 }
 
 func setupTracer(ctx context.Context, conn *grpc.ClientConn) (func(context.Context) error, error) {

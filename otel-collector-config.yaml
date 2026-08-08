@@ -8,7 +8,6 @@ receivers:
 
 processors:
   batch:
-  debug:
   memory_limiter:
     check_interval: 1s
     limit_percentage: 75
@@ -23,8 +22,6 @@ exporters:
       insecure: true
   otlphttp/loki:
     endpoint: "http://loki:3100/otlp"
-    tls:
-      insecure: true
 
   clickhouse:
     endpoint: "tcp://clickhouse:9000?database=otel"
